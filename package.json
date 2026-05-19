@@ -2,11 +2,26 @@
   "name": "examproject",
   "version": "1.0.0",
   "description": "",
+  "homepage": "https://github.com/VasilP25/ExamProject#readme",
+  "bugs": {
+    "url": "https://github.com/VasilP25/ExamProject/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VasilP25/ExamProject.git"
+  },
   "license": "ISC",
   "author": "",
   "type": "commonjs",
   "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "cars-web",
+    "cars-mobile"
+  ],
   "scripts": {
+    "build": "npm workspaces run build",
+    "dev": "npm --workspaces run dev --parallel",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
