@@ -85,3 +85,14 @@
 - Prioritize readability and maintainability.
 - Prefer clean abstractions over quick hacks.
 - Do not create unnecessary complexity.
+
+## Authentication
+
+- Use JWT (JSON Web Token) for authentication.
+- JWT tokens are used for verifying user identity across the system.
+- Store authentication tokens securely (httpOnly cookies for web when possible).
+- Mobile apps must store tokens securely using secure storage mechanisms.
+- All protected API routes must validate the JWT before granting access.
+- Never expose sensitive user data in JWT payloads.
+- JWT must always be verified on the server.
+- Do not trust client-side authentication state.
