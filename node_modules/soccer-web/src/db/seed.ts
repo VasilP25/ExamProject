@@ -1,44 +1,41 @@
-import { createHash } from "crypto";
+import bcrypt from "bcrypt";
 import { db } from "./index";
 import { users, ads, comments, bannedComments } from "./schema";
-
-const hashPassword = (password: string) =>
-  createHash("sha256").update(password).digest("hex");
 
 const usersData = [
   {
     email: "steve@gmail.com",
-    passwordHash: hashPassword("pass123"),
+    password: "password123",
     name: "Steve",
     userType: "normal",
   },
   {
     email: "peter@gmail.com",
-    passwordHash: hashPassword("pass123"),
+    password: "password123",
     name: "Peter",
     userType: "admin",
   },
   {
     email: "dave@gmail.com",
-    passwordHash: hashPassword("pass123"),
+    password: "password123",
     name: "Dave",
     userType: "normal",
   },
   {
     email: "john@gmail.com",
-    passwordHash: hashPassword("pass123"),
+    password: "password123",
     name: "John",
     userType: "normal",
   },
   {
     email: "nick@gmail.com",
-    passwordHash: hashPassword("pass123"),
+    password: "password123",
     name: "Nick",
     userType: "normal",
   },
   ...Array.from({ length: 9 }, (_, index) => ({
     email: `user${index + 1}@gmail.com`,
-    passwordHash: hashPassword("pass123"),
+    password: "password123",
     name: `User ${index + 1}`,
     userType: "normal",
   })),
@@ -52,9 +49,16 @@ async function seed() {
   await db.delete(ads).execute();
   await db.delete(users).execute();
 
+  const usersWithPasswordHashes = await Promise.all(
+    usersData.map(async ({ password, ...user }) => ({
+      ...user,
+      passwordHash: await bcrypt.hash(password, 10),
+    })),
+  );
+
   const insertedUsers = await db
     .insert(users)
-    .values(usersData)
+    .values(usersWithPasswordHashes)
     .returning({ id: users.id, email: users.email });
 
   const emailToId = Object.fromEntries(

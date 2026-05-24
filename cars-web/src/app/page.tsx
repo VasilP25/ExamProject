@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { getCurrentUser } from "../lib/auth";
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+
   return (
     <section className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-4xl items-center justify-center px-4 sm:px-6">
       <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/50 sm:p-12">
@@ -14,20 +17,22 @@ export default function Home() {
           Sign in to explore sample car listings, leave comments, and see how the public app navigation works with responsive layout.
         </p>
 
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <Link
-            href="/login"
-            className="inline-flex w-full justify-center rounded-2xl bg-sky-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-800 sm:w-auto"
-          >
-            Login
-          </Link>
-          <Link
-            href="/register"
-            className="inline-flex w-full justify-center rounded-2xl bg-orange-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 sm:w-auto"
-          >
-            Register
-          </Link>
-        </div>
+        {!user ? (
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+            <Link
+              href="/login"
+              className="inline-flex w-full justify-center rounded-2xl bg-sky-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-800 sm:w-auto"
+            >
+              Login
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex w-full justify-center rounded-2xl bg-orange-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 sm:w-auto"
+            >
+              Register
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );

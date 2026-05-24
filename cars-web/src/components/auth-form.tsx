@@ -1,28 +1,38 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import type { AuthActionState } from "../lib/auth-actions";
 
 type AuthFormProps = {
   mode: "login" | "register";
+  action: (
+    previousState: AuthActionState,
+    formData: FormData,
+  ) => Promise<AuthActionState>;
 };
 
-export default function AuthForm({ mode }: AuthFormProps) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+function SubmitButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
 
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex w-full justify-center rounded-2xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+    >
+      {pending ? "Please wait..." : label}
+    </button>
+  );
+}
+
+export default function AuthForm({ mode, action }: AuthFormProps) {
+  const [state, formAction] = useActionState(action, {});
   const submitLabel = mode === "login" ? "Sign in" : "Create account";
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    window.alert(
-      `${mode === "login" ? "Login" : "Register"} attempt for ${email}`
-    );
-  };
 
   return (
     <form
-      onSubmit={handleSubmit}
+      action={formAction}
       className="space-y-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
     >
       <div>
@@ -36,26 +46,32 @@ export default function AuthForm({ mode }: AuthFormProps) {
         </p>
       </div>
 
-      {mode === "register" && (
+      {state.error ? (
+        <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          {state.error}
+        </p>
+      ) : null}
+
+      {mode === "register" ? (
         <label className="block text-sm font-medium text-slate-700">
           Full name
           <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+            name="name"
             type="text"
+            autoComplete="name"
             placeholder="Your full name"
             required
             className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none ring-slate-400 transition focus:border-slate-900 focus:ring-2"
           />
         </label>
-      )}
+      ) : null}
 
       <label className="block text-sm font-medium text-slate-700">
         Email
         <input
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          name="email"
           type="email"
+          autoComplete="email"
           placeholder="you@example.com"
           required
           className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none ring-slate-400 transition focus:border-slate-900 focus:ring-2"
@@ -65,21 +81,19 @@ export default function AuthForm({ mode }: AuthFormProps) {
       <label className="block text-sm font-medium text-slate-700">
         Password
         <input
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          name="password"
           type="password"
-          placeholder="••••••••"
+          autoComplete={
+            mode === "login" ? "current-password" : "new-password"
+          }
+          placeholder="Password"
+          minLength={8}
           required
           className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none ring-slate-400 transition focus:border-slate-900 focus:ring-2"
         />
       </label>
 
-      <button
-        type="submit"
-        className="inline-flex w-full justify-center rounded-2xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-800"
-      >
-        {submitLabel}
-      </button>
+      <SubmitButton label={submitLabel} />
     </form>
   );
 }
