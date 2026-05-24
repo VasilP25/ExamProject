@@ -43,6 +43,7 @@
 - Use Drizzle ORM for schema and queries.
 - Keep schemas typed and organized.
 - Separate database logic from presentation logic.
+- database URL is in '../.env'
 
 ---
 
