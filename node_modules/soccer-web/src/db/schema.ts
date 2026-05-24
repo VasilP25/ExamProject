@@ -1,44 +1,63 @@
-import { pgTable, serial, varchar, text, integer, timestamp } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import {
+  pgTable,
+  serial,
+  varchar,
+  text,
+  integer,
+  timestamp,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 // Users table
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  name: varchar('name', { length: 255 }).notNull(),
-  userType: varchar('user_type', { length: 50 }).notNull(), // 'admin', 'user'
-  createdAt: timestamp('created_at').defaultNow(),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  userType: varchar("user_type", { length: 50 }).notNull(), // 'admin', 'user'
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Ads table
-export const ads = pgTable('ads', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 255 }).notNull(),
-  model: varchar('model', { length: 255 }).notNull(),
-  year: integer('year').notNull(),
-  picture: text('picture'), // URL or path to picture
-  ownId: integer('own_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  likes: integer('likes').default(0),
-  createdAt: timestamp('created_at').defaultNow(),
+export const ads = pgTable("ads", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  model: varchar("model", { length: 255 }).notNull(),
+  year: integer("year").notNull(),
+  picture: text("picture"), // URL or path to picture
+  ownId: integer("own_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  likes: integer("likes").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Comments table
-export const comments = pgTable('comments', {
-  id: serial('id').primaryKey(),
-  text: text('text').notNull(),
-  ownId: integer('own_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  adId: integer('ad_id').notNull().references(() => ads.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at').defaultNow(),
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  text: text("text").notNull(),
+  ownId: integer("own_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  adId: integer("ad_id")
+    .notNull()
+    .references(() => ads.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Banned comments table
-export const bannedComments = pgTable('banned_comments', {
-  id: serial('id').primaryKey(),
-  adId: integer('ad_id').notNull().references(() => ads.id, { onDelete: 'cascade' }),
-  commentId: integer('comment_id').notNull().references(() => comments.id, { onDelete: 'cascade' }),
-  bannedAt: timestamp('banned_at').defaultNow(),
-  bannedBy: integer('banned_by').notNull().references(() => users.id), // admin who banned it
+export const bannedComments = pgTable("banned_comments", {
+  id: serial("id").primaryKey(),
+  adId: integer("ad_id")
+    .notNull()
+    .references(() => ads.id, { onDelete: "cascade" }),
+  commentId: integer("comment_id")
+    .notNull()
+    .references(() => comments.id, { onDelete: "cascade" }),
+  bannedAt: timestamp("banned_at").defaultNow(),
+  bannedBy: integer("banned_by")
+    .notNull()
+    .references(() => users.id), // admin who banned it
 });
 
 // Relations
@@ -62,6 +81,12 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
 
 export const bannedCommentsRelations = relations(bannedComments, ({ one }) => ({
   ad: one(ads, { fields: [bannedComments.adId], references: [ads.id] }),
-  comment: one(comments, { fields: [bannedComments.commentId], references: [comments.id] }),
-  bannedByUser: one(users, { fields: [bannedComments.bannedBy], references: [users.id] }),
+  comment: one(comments, {
+    fields: [bannedComments.commentId],
+    references: [comments.id],
+  }),
+  bannedByUser: one(users, {
+    fields: [bannedComments.bannedBy],
+    references: [users.id],
+  }),
 }));
