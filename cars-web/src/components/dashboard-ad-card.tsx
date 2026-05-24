@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { deleteAdAction } from "../lib/ad-actions";
 import type { DashboardAd } from "../services/ads";
 
@@ -38,6 +39,15 @@ export default function DashboardAdCard({
         </p>
         <p className="text-sm font-medium text-slate-600">
           Posted by: {ad.ownerName}
+        </p>
+        <p className="text-sm font-medium text-slate-600">
+          <Link
+            href={`/ads/${ad.id}/comments`}
+            className="text-sky-700 hover:underline"
+            aria-label={`View ${ad.commentCount} ${ad.commentCount === 1 ? "comment" : "comments"} for ${ad.name} ${ad.model}`}
+          >
+            View {ad.commentCount} {ad.commentCount === 1 ? "comment" : "comments"}
+          </Link>
         </p>
         {canDelete ? (
           <form action={deleteAdAction} className="pt-3">

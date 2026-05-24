@@ -26,16 +26,10 @@ export default async function DashboardPage() {
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white/95 p-6 shadow-sm sm:p-8">
-        <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="mb-4">
           <h2 className="text-xl font-semibold text-slate-950">
             Last three added ads
           </h2>
-          <Link
-            href="/ads/new"
-            className="rounded-2xl bg-sky-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-800"
-          >
-            New ad
-          </Link>
         </div>
 
         {latestAds.length > 0 ? (
