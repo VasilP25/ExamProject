@@ -87,7 +87,7 @@ export default function AuthForm({ mode, action }: AuthFormProps) {
             mode === "login" ? "current-password" : "new-password"
           }
           placeholder="Password"
-          minLength={8}
+          minLength={6}
           required
           className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none ring-slate-400 transition focus:border-slate-900 focus:ring-2"
         />

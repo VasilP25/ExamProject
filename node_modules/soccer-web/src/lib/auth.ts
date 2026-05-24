@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import { createHash } from "crypto";
 import jwt from "jsonwebtoken";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
@@ -41,7 +42,15 @@ export async function verifyPassword(
   password: string,
   hash: string,
 ): Promise<boolean> {
-  return bcrypt.compare(password, hash);
+  try {
+    return await bcrypt.compare(password, hash);
+  } catch {
+    return false;
+  }
+}
+
+function verifyLegacySha256Password(password: string, hash: string): boolean {
+  return createHash("sha256").update(password).digest("hex") === hash;
 }
 
 export function createToken(user: AuthUser): string {
@@ -128,8 +137,18 @@ export async function loginUser({
   }
 
   const isValid = await verifyPassword(password, user.passwordHash);
-  if (!isValid) {
+  const isLegacyValid =
+    !isValid && verifyLegacySha256Password(password, user.passwordHash);
+
+  if (!isValid && !isLegacyValid) {
     throw new Error("Invalid email or password.");
+  }
+
+  if (isLegacyValid) {
+    await db
+      .update(users)
+      .set({ passwordHash: await hashPassword(password) })
+      .where(eq(users.id, user.id));
   }
 
   const authUser = await findUserById(user.id);

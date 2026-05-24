@@ -5,37 +5,37 @@ import { users, ads, comments, bannedComments } from "./schema";
 const usersData = [
   {
     email: "steve@gmail.com",
-    password: "password123",
+    password: "pass123",
     name: "Steve",
     userType: "normal",
   },
   {
     email: "peter@gmail.com",
-    password: "password123",
+    password: "pass123",
     name: "Peter",
     userType: "admin",
   },
   {
     email: "dave@gmail.com",
-    password: "password123",
+    password: "pass123",
     name: "Dave",
     userType: "normal",
   },
   {
     email: "john@gmail.com",
-    password: "password123",
+    password: "pass123",
     name: "John",
     userType: "normal",
   },
   {
     email: "nick@gmail.com",
-    password: "password123",
+    password: "pass123",
     name: "Nick",
     userType: "normal",
   },
   ...Array.from({ length: 9 }, (_, index) => ({
     email: `user${index + 1}@gmail.com`,
-    password: "password123",
+    password: "pass123",
     name: `User ${index + 1}`,
     userType: "normal",
   })),
@@ -70,7 +70,8 @@ async function seed() {
       name: "Ford",
       model: "Focus",
       year: 2012,
-      picture: "https://example.com/images/ford-focus-2012.jpg",
+      picture:
+        "https://commons.wikimedia.org/wiki/Special:FilePath/2012_Ford_Focus_SE_hatch_front_--_04-19-2011.jpg",
       ownId: emailToId["steve@gmail.com"],
       likes: 5,
     },
@@ -78,9 +79,19 @@ async function seed() {
       name: "Toyota",
       model: "Corolla",
       year: 2013,
-      picture: "https://example.com/images/toyota-corolla-2013.jpg",
+      picture:
+        "https://commons.wikimedia.org/wiki/Special:FilePath/%2713_Toyota_Corolla_%28SDLDQ_%2713%29.jpg",
       ownId: emailToId["peter@gmail.com"],
       likes: 8,
+    },
+    {
+      name: "BMW",
+      model: "320d",
+      year: 2018,
+      picture:
+        "https://commons.wikimedia.org/wiki/Special:FilePath/BMW_320d.JPG",
+      ownId: emailToId["john@gmail.com"],
+      likes: 12,
     },
   ];
 

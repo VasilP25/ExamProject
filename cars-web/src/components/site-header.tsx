@@ -21,8 +21,21 @@ export default async function SiteHeader() {
           </Link>
           {user ? (
             <>
+              <Link
+                href="/dashboard"
+                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/ads/new"
+                className="rounded-full bg-sky-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-800"
+              >
+                New ad
+              </Link>
               <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700">
                 {user.name} | {user.email}
+                {user.userType === "admin" ? " | Admin" : ""}
               </span>
               <form action={logoutAction} className="inline">
                 <button
