@@ -1,4 +1,5 @@
 import { and, desc, eq, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import { db } from "../db";
 import { ads, comments, users } from "../db/schema";
 import type { AuthUser } from "../lib/auth";
@@ -35,7 +36,7 @@ export async function getAds(
   const trimmedYear = year.trim();
   const offset = (Math.max(page, 1) - 1) * pageSize;
 
-  const filters: any[] = [];
+  const filters: SQL[] = [];
 
   if (trimmedName) {
     filters.push(sql`LOWER(${ads.name}) LIKE LOWER(${`%${trimmedName}%`})`);

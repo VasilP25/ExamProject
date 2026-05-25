@@ -1,4 +1,3 @@
-import Link from "next/link";
 import DashboardAdCard from "../../components/dashboard-ad-card";
 import { getCurrentUser, requireAuth } from "../../lib/auth";
 import { getLatestAds } from "../../services/ads";

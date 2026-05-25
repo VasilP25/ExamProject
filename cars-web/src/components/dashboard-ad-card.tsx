@@ -46,7 +46,7 @@ export default function DashboardAdCard({
             className="text-sky-700 hover:underline"
             aria-label={`View ${ad.commentCount} ${ad.commentCount === 1 ? "comment" : "comments"} for ${ad.name} ${ad.model}`}
           >
-            View {ad.commentCount} {ad.commentCount === 1 ? "comment" : "comments"}
+            View comments
           </Link>
         </p>
         {canDelete ? (
