@@ -7,12 +7,14 @@ type DashboardAdCardProps = {
   ad: DashboardAd;
   canDelete: boolean;
   canLike?: boolean;
+  canViewPrivateDetails?: boolean;
 };
 
 export default function DashboardAdCard({
   ad,
   canDelete,
   canLike = true,
+  canViewPrivateDetails = true,
 }: DashboardAdCardProps) {
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -39,9 +41,11 @@ export default function DashboardAdCard({
         <p className="text-sm font-medium text-slate-600">
           Year of registration: {ad.year}
         </p>
-        <p className="text-sm font-semibold text-slate-900">
-          Price: {ad.price.toLocaleString("en-US")} EUR
-        </p>
+        {canViewPrivateDetails ? (
+          <p className="text-sm font-semibold text-slate-900">
+            Price: {ad.price.toLocaleString("en-US")} EUR
+          </p>
+        ) : null}
         <p className="text-sm font-medium text-slate-600">
           Posted by: {ad.ownerName}
         </p>
@@ -63,25 +67,28 @@ export default function DashboardAdCard({
                 {ad.isLikedByCurrentUser ? "Liked" : "Like"}
               </button>
             </form>
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-            >
-              Like
-            </Link>
-          )}
+          ) : null}
         </div>
-        <p className="text-sm font-medium text-slate-600">
-          <Link
-            href={`/ads/${ad.id}/comments`}
-            className="text-sky-700 hover:underline"
-            aria-label={`View ${ad.commentCount} ${ad.commentCount === 1 ? "comment" : "comments"} for ${ad.name} ${ad.model}`}
-          >
-            View {ad.commentCount}{" "}
-            {ad.commentCount === 1 ? "comment" : "comments"}
-          </Link>
-        </p>
+        {canViewPrivateDetails ? (
+          <>
+            <p className="text-sm font-medium text-slate-600">
+              <Link
+                href={`/ads/${ad.id}/comments`}
+                className="text-sky-700 hover:underline"
+                aria-label={`View ${ad.commentCount} ${ad.commentCount === 1 ? "comment" : "comments"} for ${ad.name} ${ad.model}`}
+              >
+                View {ad.commentCount}{" "}
+                {ad.commentCount === 1 ? "comment" : "comments"}
+              </Link>
+            </p>
+            <Link
+              href={`/ads/${ad.id}/download`}
+              className="inline-flex w-full justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              Download ad
+            </Link>
+          </>
+        ) : null}
         {canDelete ? (
           <form action={deleteAdAction} className="pt-3">
             <input type="hidden" name="adId" value={ad.id} />

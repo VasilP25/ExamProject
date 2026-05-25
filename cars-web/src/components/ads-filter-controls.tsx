@@ -89,8 +89,7 @@ export default function AdsFilterControls({
         </label>
       </div>
 
-      <div className="mt-3 flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-        <p>Results update automatically as you type.</p>
+      <div className="mt-3 flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-end">
         {isPending ? (
           <p className="font-medium text-sky-700">Updating...</p>
         ) : null}

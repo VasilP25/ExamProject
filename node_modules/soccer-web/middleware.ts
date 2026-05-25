@@ -4,6 +4,18 @@ import type { NextRequest } from "next/server";
 const AUTH_COOKIE_NAME = "carapp_session";
 const PUBLIC_PATHS = ["/", "/login", "/register"];
 
+function isPublicPath(pathname: string): boolean {
+  if (PUBLIC_PATHS.includes(pathname)) {
+    return true;
+  }
+
+  if (pathname === "/ads") {
+    return true;
+  }
+
+  return /^\/ads\/\d+$/.test(pathname);
+}
+
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -87,7 +99,7 @@ async function verifyToken(token: string): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (PUBLIC_PATHS.includes(pathname)) {
+  if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 

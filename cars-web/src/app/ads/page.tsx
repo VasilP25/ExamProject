@@ -67,7 +67,7 @@ export default async function AdsPage({
               Browse all ads
             </h1>
             <p className="mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
-              Search for cars by name, model, or year. Only non-empty fields are applied, and ads must match all provided filters.
+              Search for cars by name, model, or year.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -103,6 +103,7 @@ export default async function AdsPage({
               ad={ad}
               canDelete={user?.userType === "admin" || user?.id === ad.ownerId}
               canLike={Boolean(user)}
+              canViewPrivateDetails={Boolean(user)}
             />
           ))}
         </div>
@@ -114,7 +115,7 @@ export default async function AdsPage({
 
       <div className="flex flex-col items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-600 sm:flex-row">
         <p>
-          Page {pagination.page} • {pagination.pageSize} ads per page
+          Page {pagination.page}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           {pagination.page > 1 ? (
