@@ -13,6 +13,10 @@ function isPublicPath(pathname: string): boolean {
     return true;
   }
 
+  if (pathname.startsWith("/api/mobile/")) {
+    return true;
+  }
+
   return /^\/ads\/\d+$/.test(pathname);
 }
 

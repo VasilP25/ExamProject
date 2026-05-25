@@ -1,181 +1,214 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import React from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ExternalLink } from '@/components/external-link';
+import { CarCard } from '@/components/car-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { BottomTabInset, Spacing } from '@/constants/theme';
+import { getAds } from '@/services/cars-api';
+import type { MobileAd } from '@/types/ad';
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-  };
-  const theme = useTheme();
+export default function BrowseAdsScreen() {
+  const [name, setName] = useState('');
+  const [model, setModel] = useState('');
+  const [year, setYear] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [ads, setAds] = useState<MobileAd[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
+  useEffect(() => {
+    let isMounted = true;
+
+    const timeout = setTimeout(() => {
+      setIsLoading(true);
+
+      getAds({ name, model, year, page })
+        .then((response) => {
+          if (isMounted) {
+            setAds(response.ads);
+            setHasMore(response.hasMore);
+            setError(null);
+          }
+        })
+        .catch((fetchError: Error) => {
+          if (isMounted) {
+            setError(fetchError.message);
+          }
+        })
+        .finally(() => {
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        });
+
+    }, 250);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeout);
+    };
+  }, [name, model, year, page]);
+
+  function updateName(value: string) {
+    setName(value);
+    setPage(1);
+  }
+
+  function updateModel(value: string) {
+    setModel(value);
+    setPage(1);
+  }
+
+  function updateYear(value: string) {
+    setYear(value);
+    setPage(1);
+  }
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
+    <ThemedView style={styles.screen}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <ThemedText type="subtitle">Browse ads</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Search cars by brand, model, or year.
           </ThemedText>
+        </View>
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
+        <ThemedView type="backgroundElement" style={styles.filters}>
+          <TextInput
+            value={name}
+            onChangeText={updateName}
+            placeholder="Brand"
+            placeholderTextColor="#64748b"
+            style={styles.input}
+          />
+          <TextInput
+            value={model}
+            onChangeText={updateModel}
+            placeholder="Model"
+            placeholderTextColor="#64748b"
+            style={styles.input}
+          />
+          <TextInput
+            value={year}
+            onChangeText={updateYear}
+            placeholder="Year"
+            placeholderTextColor="#64748b"
+            keyboardType="number-pad"
+            style={styles.input}
+          />
+        </ThemedView>
+
+        {isLoading ? (
+          <ActivityIndicator style={styles.loader} />
+        ) : error ? (
+          <ThemedView type="backgroundElement" style={styles.messageBox}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {error}
+            </ThemedText>
+          </ThemedView>
+        ) : (
+          <FlatList
+            data={ads}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={({ item }) => <CarCard ad={item} />}
+            ListEmptyComponent={
+              <ThemedView type="backgroundElement" style={styles.messageBox}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  No car ads match your search.
+                </ThemedText>
               </ThemedView>
-            </Pressable>
-          </ExternalLink>
-        </ThemedView>
-
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
-
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+            }
+            ListFooterComponent={
+              <View style={styles.pager}>
+                <Pressable
+                  disabled={page === 1}
+                  onPress={() => setPage((currentPage) => Math.max(currentPage - 1, 1))}
+                  style={[styles.pageButton, page === 1 && styles.disabledButton]}>
+                  <ThemedText type="smallBold">Previous</ThemedText>
+                </Pressable>
+                <ThemedText type="small">Page {page}</ThemedText>
+                <Pressable
+                  disabled={!hasMore}
+                  onPress={() => setPage((currentPage) => currentPage + 1)}
+                  style={[styles.pageButton, !hasMore && styles.disabledButton]}>
+                  <ThemedText type="smallBold">Next</ThemedText>
+                </Pressable>
+              </View>
+            }
+            contentContainerStyle={styles.list}
+          />
+        )}
+      </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  screen: {
     flex: 1,
   },
-  contentContainer: {
+  safeArea: {
+    flex: 1,
+    padding: Spacing.four,
+    paddingBottom: BottomTabInset + Spacing.four,
+  },
+  header: {
+    gap: 8,
+    marginBottom: Spacing.four,
+  },
+  filters: {
+    gap: Spacing.two,
+    borderRadius: 12,
+    padding: Spacing.three,
+    marginBottom: Spacing.four,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#dbe3ef',
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    color: '#0f172a',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+  },
+  loader: {
+    marginTop: Spacing.four,
+  },
+  list: {
+    gap: Spacing.four,
+    paddingBottom: Spacing.four,
+  },
+  messageBox: {
+    borderRadius: 12,
+    padding: Spacing.four,
+  },
+  pager: {
+    alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
-  },
-  titleContainer: {
+    justifyContent: 'space-between',
     gap: Spacing.three,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+    paddingVertical: Spacing.four,
   },
-  centerText: {
-    textAlign: 'center',
+  pageButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#dbe3ef',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
-  pressed: {
-    opacity: 0.7,
-  },
-  linkButton: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    justifyContent: 'center',
-    gap: Spacing.one,
-    alignItems: 'center',
-  },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-  },
-  collapsibleContent: {
-    alignItems: 'center',
-  },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
+  disabledButton: {
+    opacity: 0.4,
   },
 });
