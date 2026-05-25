@@ -1,6 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  createCommentAction,
+  deleteCommentAction,
+} from "../../../../lib/ad-actions";
+import { getCurrentUser } from "../../../../lib/auth";
 import { getAdDetail, getCommentsForAd } from "../../../../services/ads";
 
 type AdCommentsPageProps = {
@@ -16,7 +21,8 @@ export default async function AdCommentsPage({
     notFound();
   }
 
-  const [ad, comments] = await Promise.all([
+  const [user, ad, comments] = await Promise.all([
+    getCurrentUser(),
     getAdDetail(adId),
     getCommentsForAd(adId),
   ]);
@@ -57,7 +63,7 @@ export default async function AdCommentsPage({
           </div>
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
           <article className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
             <div className="aspect-[4/3] bg-slate-100">
               {ad.picture ? (
@@ -92,6 +98,10 @@ export default async function AdCommentsPage({
                 <span className="font-semibold text-slate-950">Posted by:</span>{" "}
                 {ad.ownerName}
               </p>
+              <div>
+                <p className="font-semibold text-slate-950">Description:</p>
+                <p className="mt-2 leading-6">{ad.description}</p>
+              </div>
             </div>
           </article>
 
@@ -117,12 +127,58 @@ export default async function AdCommentsPage({
                     <p className="mt-4 text-sm leading-6 text-slate-700">
                       {comment.text}
                     </p>
+                    {user?.userType === "admin" ||
+                    user?.id === comment.ownerId ? (
+                      <form action={deleteCommentAction} className="mt-4">
+                        <input
+                          type="hidden"
+                          name="commentId"
+                          value={comment.id}
+                        />
+                        <button
+                          type="submit"
+                          className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+                        >
+                          Delete comment
+                        </button>
+                      </form>
+                    ) : null}
                   </article>
                 ))}
               </div>
             ) : (
               <div className="mt-5 rounded-3xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-600">
                 No comments exist for this ad yet.
+              </div>
+            )}
+
+            {user ? (
+              <form
+                action={createCommentAction}
+                className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <input type="hidden" name="adId" value={ad.id} />
+                <label className="block text-sm font-semibold text-slate-900">
+                  Add a comment
+                  <textarea
+                    name="text"
+                    rows={4}
+                    maxLength={1000}
+                    required
+                    placeholder="Write your comment..."
+                    className="mt-3 w-full resize-y rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-normal text-slate-950 outline-none ring-slate-400 transition focus:border-slate-900 focus:ring-2"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  className="mt-4 rounded-2xl bg-sky-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-800"
+                >
+                  Add comment
+                </button>
+              </form>
+            ) : (
+              <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
+                Log in to add a comment.
               </div>
             )}
           </div>

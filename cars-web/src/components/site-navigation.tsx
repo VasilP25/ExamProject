@@ -46,6 +46,14 @@ export default function SiteNavigation({ user, logoutAction }: Props) {
             >
               New ad
             </Link>
+            {user.userType === "admin" ? (
+              <Link
+                href="/admin/deleted-comments"
+                className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Deleted comments
+              </Link>
+            ) : null}
             <form action={logoutAction} method="post" className="inline">
               <button
                 type="submit"
@@ -126,6 +134,14 @@ export default function SiteNavigation({ user, logoutAction }: Props) {
                 >
                   New ad
                 </Link>
+                {user.userType === "admin" ? (
+                  <Link
+                    href="/admin/deleted-comments"
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                  >
+                    Deleted comments
+                  </Link>
+                ) : null}
                 <form action={logoutAction} method="post">
                   <button
                     type="submit"

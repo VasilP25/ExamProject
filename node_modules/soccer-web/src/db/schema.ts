@@ -24,6 +24,7 @@ export const ads = pgTable("ads", {
   name: varchar("name", { length: 255 }).notNull(),
   model: varchar("model", { length: 255 }).notNull(),
   year: integer("year").notNull(),
+  description: text("description").notNull().default(""),
   picture: text("picture"), // URL or path to picture
   ownId: integer("own_id")
     .notNull()
@@ -51,9 +52,10 @@ export const bannedComments = pgTable("banned_comments", {
   adId: integer("ad_id")
     .notNull()
     .references(() => ads.id, { onDelete: "cascade" }),
-  commentId: integer("comment_id")
-    .notNull()
-    .references(() => comments.id, { onDelete: "cascade" }),
+  commentId: integer("comment_id").notNull(),
+  commentText: text("comment_text"),
+  commentOwnerId: integer("comment_owner_id").references(() => users.id),
+  commentCreatedAt: timestamp("comment_created_at"),
   bannedAt: timestamp("banned_at").defaultNow(),
   bannedBy: integer("banned_by")
     .notNull()
@@ -81,9 +83,9 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
 
 export const bannedCommentsRelations = relations(bannedComments, ({ one }) => ({
   ad: one(ads, { fields: [bannedComments.adId], references: [ads.id] }),
-  comment: one(comments, {
-    fields: [bannedComments.commentId],
-    references: [comments.id],
+  commentOwner: one(users, {
+    fields: [bannedComments.commentOwnerId],
+    references: [users.id],
   }),
   bannedByUser: one(users, {
     fields: [bannedComments.bannedBy],

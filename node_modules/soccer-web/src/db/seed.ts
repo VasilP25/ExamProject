@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import { db } from "./index";
 import { users, ads, comments, bannedComments } from "./schema";
+import { getSeedAdDescription, seedAdsData } from "./seed-ads-data";
+import { seedCommentsData } from "./seed-comments-data";
 
 const usersData = [
   {
@@ -65,64 +67,31 @@ async function seed() {
     insertedUsers.map((user) => [user.email, user.id]),
   );
 
-  const adsData = [
-    {
-      name: "Ford",
-      model: "Focus",
-      year: 2012,
-      picture:
-        "https://commons.wikimedia.org/wiki/Special:FilePath/2012_Ford_Focus_SE_hatch_front_--_04-19-2011.jpg",
-      ownId: emailToId["steve@gmail.com"],
-      likes: 5,
-    },
-    {
-      name: "Toyota",
-      model: "Corolla",
-      year: 2013,
-      picture:
-        "https://commons.wikimedia.org/wiki/Special:FilePath/%2713_Toyota_Corolla_%28SDLDQ_%2713%29.jpg",
-      ownId: emailToId["peter@gmail.com"],
-      likes: 8,
-    },
-    {
-      name: "BMW",
-      model: "320d",
-      year: 2018,
-      picture:
-        "https://commons.wikimedia.org/wiki/Special:FilePath/BMW_320d.JPG",
-      ownId: emailToId["john@gmail.com"],
-      likes: 12,
-    },
-  ];
+  const adsData = seedAdsData.map(({ ownerEmail, ...ad }) => ({
+    ...ad,
+    description: ad.description ?? getSeedAdDescription(ad),
+    ownId: emailToId[ownerEmail],
+  }));
 
   const insertedAds = await db
     .insert(ads)
     .values(adsData)
-    .returning({ id: ads.id, name: ads.name });
+    .returning({ id: ads.id, name: ads.name, model: ads.model, year: ads.year });
   const adNameToId = Object.fromEntries(
     insertedAds.map((ad) => [ad.name, ad.id]),
   );
+  const adKeyToId = Object.fromEntries(
+    insertedAds.map((ad) => [`${ad.name}:${ad.model}:${ad.year}`, ad.id]),
+  );
 
-  const commentsData = [
-    {
-      text: "Some comment about the car.",
-      ownId: emailToId["dave@gmail.com"],
-      adId: adNameToId["Ford"],
-      createdAt: new Date("2026-05-20T10:00:00Z"),
-    },
-    {
-      text: "Some comment that mentions the model.",
-      ownId: emailToId["john@gmail.com"],
-      adId: adNameToId["Toyota"],
-      createdAt: new Date("2026-05-21T14:30:00Z"),
-    },
-    {
-      text: "Some comment from another user.",
-      ownId: emailToId["nick@gmail.com"],
-      adId: adNameToId["Ford"],
-      createdAt: new Date("2026-05-22T09:15:00Z"),
-    },
-  ];
+  const commentsData = seedCommentsData.map((comment) => ({
+    text: comment.text,
+    ownId: emailToId[comment.ownerEmail],
+    adId: adKeyToId[
+      `${comment.adName}:${comment.adModel}:${comment.adYear}`
+    ],
+    createdAt: comment.createdAt,
+  }));
 
   const insertedComments = await db
     .insert(comments)

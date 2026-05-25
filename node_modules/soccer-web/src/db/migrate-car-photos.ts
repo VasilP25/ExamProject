@@ -1,36 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "./index";
+import { getSeedAdDescription, seedAdsData } from "./seed-ads-data";
 import { ads, users } from "./schema";
-
-const carPhotoData = [
-  {
-    name: "Ford",
-    model: "Focus",
-    year: 2012,
-    ownerEmail: "steve@gmail.com",
-    likes: 5,
-    picture:
-      "https://commons.wikimedia.org/wiki/Special:FilePath/2012_Ford_Focus_SE_hatch_front_--_04-19-2011.jpg",
-  },
-  {
-    name: "Toyota",
-    model: "Corolla",
-    year: 2013,
-    ownerEmail: "peter@gmail.com",
-    likes: 8,
-    picture:
-      "https://commons.wikimedia.org/wiki/Special:FilePath/%2713_Toyota_Corolla_%28SDLDQ_%2713%29.jpg",
-  },
-  {
-    name: "BMW",
-    model: "320d",
-    year: 2018,
-    ownerEmail: "john@gmail.com",
-    likes: 12,
-    picture:
-      "https://commons.wikimedia.org/wiki/Special:FilePath/BMW_320d.JPG",
-  },
-];
 
 async function findOwnerId(ownerEmail: string): Promise<number> {
   const [owner] = await db
@@ -45,10 +16,14 @@ async function findOwnerId(ownerEmail: string): Promise<number> {
   return owner.id;
 }
 
-async function migrateCarPhotos() {
-  console.log("Migrating car photo data...");
+async function migrateSeedAds() {
+  console.log("Migrating seed ads...");
 
-  for (const car of carPhotoData) {
+  let insertedCount = 0;
+  let updatedCount = 0;
+
+  for (const car of seedAdsData) {
+    const description = car.description ?? getSeedAdDescription(car);
     const [existingAd] = await db
       .select({ id: ads.id })
       .from(ads)
@@ -63,9 +38,9 @@ async function migrateCarPhotos() {
     if (existingAd) {
       await db
         .update(ads)
-        .set({ picture: car.picture })
+        .set({ description, picture: car.picture, likes: car.likes })
         .where(eq(ads.id, existingAd.id));
-      console.log(`Updated ${car.name} ${car.model}.`);
+      updatedCount += 1;
       continue;
     }
 
@@ -74,19 +49,20 @@ async function migrateCarPhotos() {
       name: car.name,
       model: car.model,
       year: car.year,
+      description,
       picture: car.picture,
       ownId: ownerId,
       likes: car.likes,
     });
-    console.log(`Inserted ${car.name} ${car.model}.`);
+    insertedCount += 1;
   }
 
-  console.log("Car photo migration complete.");
+  console.log(`Seed ads migration complete. Inserted ${insertedCount}, updated ${updatedCount}.`);
 }
 
-migrateCarPhotos()
+migrateSeedAds()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error("Car photo migration failed:", error);
+    console.error("Seed ads migration failed:", error);
     process.exit(1);
   });

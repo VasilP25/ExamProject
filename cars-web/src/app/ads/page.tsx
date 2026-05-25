@@ -31,20 +31,21 @@ function buildQuery(name: string, model: string, year: string, page: number) {
 export default async function AdsPage({
   searchParams,
 }: {
-  searchParams?: SearchParams;
+  searchParams?: Promise<SearchParams>;
 }) {
-  const rawName = Array.isArray(searchParams?.name)
-    ? searchParams?.name[0]
-    : searchParams?.name;
-  const rawModel = Array.isArray(searchParams?.model)
-    ? searchParams?.model[0]
-    : searchParams?.model;
-  const rawYear = Array.isArray(searchParams?.year)
-    ? searchParams?.year[0]
-    : searchParams?.year;
-  const rawPage = Array.isArray(searchParams?.page)
-    ? searchParams?.page[0]
-    : searchParams?.page;
+  const resolvedSearchParams = await searchParams;
+  const rawName = Array.isArray(resolvedSearchParams?.name)
+    ? resolvedSearchParams?.name[0]
+    : resolvedSearchParams?.name;
+  const rawModel = Array.isArray(resolvedSearchParams?.model)
+    ? resolvedSearchParams?.model[0]
+    : resolvedSearchParams?.model;
+  const rawYear = Array.isArray(resolvedSearchParams?.year)
+    ? resolvedSearchParams?.year[0]
+    : resolvedSearchParams?.year;
+  const rawPage = Array.isArray(resolvedSearchParams?.page)
+    ? resolvedSearchParams?.page[0]
+    : resolvedSearchParams?.page;
 
   const name = rawName?.trim() ?? "";
   const model = rawModel?.trim() ?? "";

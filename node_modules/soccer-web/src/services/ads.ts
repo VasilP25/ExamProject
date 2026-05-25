@@ -1,7 +1,8 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db";
-import { ads, comments, users } from "../db/schema";
+import { ads, bannedComments, comments, users } from "../db/schema";
 import type { AuthUser } from "../lib/auth";
 
 export type DashboardAd = {
@@ -9,6 +10,7 @@ export type DashboardAd = {
   name: string;
   model: string;
   year: number;
+  description: string;
   picture: string | null;
   ownerId: number;
   ownerName: string;
@@ -22,7 +24,7 @@ export type AdsPaginationResult = {
   hasMore: boolean;
 };
 
-const ADS_PAGE_SIZE = 10;
+const ADS_PAGE_SIZE = 9;
 
 export async function getAds(
   name = "",
@@ -47,13 +49,7 @@ export async function getAds(
   }
 
   if (trimmedYear) {
-    const yearNumber = Number(trimmedYear);
-
-    if (!Number.isNaN(yearNumber)) {
-      filters.push(eq(ads.year, yearNumber));
-    } else {
-      filters.push(sql`CAST(${ads.year} AS TEXT) LIKE ${`%${trimmedYear}%`}`);
-    }
+    filters.push(sql`CAST(${ads.year} AS TEXT) LIKE ${`%${trimmedYear}%`}`);
   }
 
   const fetchedAds = await db
@@ -62,13 +58,15 @@ export async function getAds(
       name: ads.name,
       model: ads.model,
       year: ads.year,
+      description: ads.description,
       picture: ads.picture,
       ownerId: ads.ownId,
       ownerName: users.name,
-      commentCount: sql<number>`COALESCE(COUNT(${comments.id}), 0)`,
+      commentCount: sql<number>`COALESCE(COUNT(${comments.id}) FILTER (WHERE ${bannedComments.id} IS NULL), 0)`,
     })
     .from(ads)
     .leftJoin(comments, eq(comments.adId, ads.id))
+    .leftJoin(bannedComments, eq(bannedComments.commentId, comments.id))
     .innerJoin(users, eq(ads.ownId, users.id))
     .where(filters.length ? and(...filters) : undefined)
     .groupBy(
@@ -76,6 +74,7 @@ export async function getAds(
       ads.name,
       ads.model,
       ads.year,
+      ads.description,
       ads.picture,
       ads.ownId,
       users.name,
@@ -97,6 +96,7 @@ export type CreateAdInput = {
   name: string;
   model: string;
   year: number;
+  description: string;
   picture?: string;
   ownerId: number;
 };
@@ -108,19 +108,22 @@ export async function getLatestAds(limit = 3): Promise<DashboardAd[]> {
       name: ads.name,
       model: ads.model,
       year: ads.year,
+      description: ads.description,
       picture: ads.picture,
       ownerId: ads.ownId,
       ownerName: users.name,
-      commentCount: sql<number>`COALESCE(COUNT(${comments.id}), 0)`,
+      commentCount: sql<number>`COALESCE(COUNT(${comments.id}) FILTER (WHERE ${bannedComments.id} IS NULL), 0)`,
     })
     .from(ads)
     .leftJoin(comments, eq(comments.adId, ads.id))
+    .leftJoin(bannedComments, eq(bannedComments.commentId, comments.id))
     .innerJoin(users, eq(ads.ownId, users.id))
     .groupBy(
       ads.id,
       ads.name,
       ads.model,
       ads.year,
+      ads.description,
       ads.picture,
       ads.ownId,
       users.name,
@@ -134,6 +137,7 @@ export async function createAd({
   name,
   model,
   year,
+  description,
   picture,
   ownerId,
 }: CreateAdInput): Promise<void> {
@@ -141,6 +145,7 @@ export async function createAd({
     name,
     model,
     year,
+    description,
     picture: picture || null,
     ownId: ownerId,
     likes: 0,
@@ -166,9 +171,25 @@ export async function deleteAdForUser(
 
 export type AdComment = {
   id: number;
+  adId: number;
   text: string;
+  ownerId: number;
   ownerName: string;
   createdAt: Date | null;
+};
+
+export type DeletedComment = {
+  id: number;
+  originalCommentId: number;
+  adId: number;
+  adName: string;
+  adModel: string;
+  commentText: string;
+  commentOwnerId: number | null;
+  commentOwnerName: string | null;
+  commentCreatedAt: Date | null;
+  bannedAt: Date | null;
+  bannedByName: string;
 };
 
 export async function getAdDetail(adId: number): Promise<DashboardAd | null> {
@@ -178,13 +199,15 @@ export async function getAdDetail(adId: number): Promise<DashboardAd | null> {
       name: ads.name,
       model: ads.model,
       year: ads.year,
+      description: ads.description,
       picture: ads.picture,
       ownerId: ads.ownId,
       ownerName: users.name,
-      commentCount: sql<number>`COALESCE(COUNT(${comments.id}), 0)`,
+      commentCount: sql<number>`COALESCE(COUNT(${comments.id}) FILTER (WHERE ${bannedComments.id} IS NULL), 0)`,
     })
     .from(ads)
     .leftJoin(comments, eq(comments.adId, ads.id))
+    .leftJoin(bannedComments, eq(bannedComments.commentId, comments.id))
     .innerJoin(users, eq(ads.ownId, users.id))
     .where(eq(ads.id, adId))
     .groupBy(
@@ -192,6 +215,7 @@ export async function getAdDetail(adId: number): Promise<DashboardAd | null> {
       ads.name,
       ads.model,
       ads.year,
+      ads.description,
       ads.picture,
       ads.ownId,
       users.name,
@@ -206,12 +230,149 @@ export async function getCommentsForAd(adId: number): Promise<AdComment[]> {
   return db
     .select({
       id: comments.id,
+      adId: comments.adId,
       text: comments.text,
+      ownerId: comments.ownId,
       ownerName: users.name,
       createdAt: comments.createdAt,
     })
     .from(comments)
+    .leftJoin(bannedComments, eq(bannedComments.commentId, comments.id))
     .innerJoin(users, eq(comments.ownId, users.id))
-    .where(eq(comments.adId, adId))
+    .where(and(eq(comments.adId, adId), isNull(bannedComments.id)))
     .orderBy(desc(comments.createdAt));
+}
+
+export async function deleteCommentForUser(
+  commentId: number,
+  user: AuthUser,
+): Promise<{ adId: number } | null> {
+  const [comment] = await db
+    .select({
+      id: comments.id,
+      adId: comments.adId,
+      ownerId: comments.ownId,
+      text: comments.text,
+      createdAt: comments.createdAt,
+    })
+    .from(comments)
+    .where(eq(comments.id, commentId));
+
+  if (!comment) {
+    return null;
+  }
+
+  if (user.userType !== "admin" && comment.ownerId !== user.id) {
+    return null;
+  }
+
+  const [existingBan] = await db
+    .select({ id: bannedComments.id })
+    .from(bannedComments)
+    .where(eq(bannedComments.commentId, commentId));
+
+  if (!existingBan) {
+    await db.insert(bannedComments).values({
+      adId: comment.adId,
+      commentId: comment.id,
+      commentText: comment.text,
+      commentOwnerId: comment.ownerId,
+      commentCreatedAt: comment.createdAt,
+      bannedBy: user.id,
+    });
+  } else {
+    await db
+      .update(bannedComments)
+      .set({
+        commentText: comment.text,
+        commentOwnerId: comment.ownerId,
+        commentCreatedAt: comment.createdAt,
+        bannedBy: user.id,
+      })
+      .where(eq(bannedComments.id, existingBan.id));
+  }
+
+  await db.delete(comments).where(eq(comments.id, commentId));
+
+  return { adId: comment.adId };
+}
+
+export async function createCommentForAd({
+  adId,
+  userId,
+  text,
+}: {
+  adId: number;
+  userId: number;
+  text: string;
+}): Promise<void> {
+  const [ad] = await db.select({ id: ads.id }).from(ads).where(eq(ads.id, adId));
+  if (!ad) {
+    throw new Error("Ad not found.");
+  }
+
+  await db.insert(comments).values({
+    adId,
+    ownId: userId,
+    text,
+  });
+}
+
+export async function getDeletedComments(): Promise<DeletedComment[]> {
+  const commentOwners = alias(users, "comment_owners");
+  const bannedByUsers = alias(users, "banned_by_users");
+
+  return db
+    .select({
+      id: bannedComments.id,
+      originalCommentId: bannedComments.commentId,
+      adId: bannedComments.adId,
+      adName: ads.name,
+      adModel: ads.model,
+      commentText: sql<string>`COALESCE(${bannedComments.commentText}, '')`,
+      commentOwnerId: bannedComments.commentOwnerId,
+      commentOwnerName: commentOwners.name,
+      commentCreatedAt: bannedComments.commentCreatedAt,
+      bannedAt: bannedComments.bannedAt,
+      bannedByName: bannedByUsers.name,
+    })
+    .from(bannedComments)
+    .innerJoin(ads, eq(bannedComments.adId, ads.id))
+    .leftJoin(commentOwners, eq(bannedComments.commentOwnerId, commentOwners.id))
+    .innerJoin(bannedByUsers, eq(bannedComments.bannedBy, bannedByUsers.id))
+    .orderBy(desc(bannedComments.bannedAt), desc(bannedComments.id));
+}
+
+export async function restoreDeletedComment(
+  bannedCommentId: number,
+): Promise<{ adId: number } | null> {
+  const [deletedComment] = await db
+    .select({
+      id: bannedComments.id,
+      adId: bannedComments.adId,
+      commentText: bannedComments.commentText,
+      commentOwnerId: bannedComments.commentOwnerId,
+      commentCreatedAt: bannedComments.commentCreatedAt,
+    })
+    .from(bannedComments)
+    .where(eq(bannedComments.id, bannedCommentId));
+
+  if (
+    !deletedComment ||
+    !deletedComment.commentText ||
+    !deletedComment.commentOwnerId
+  ) {
+    return null;
+  }
+
+  await db.insert(comments).values({
+    adId: deletedComment.adId,
+    ownId: deletedComment.commentOwnerId,
+    text: deletedComment.commentText,
+    createdAt: deletedComment.commentCreatedAt ?? new Date(),
+  });
+
+  await db.delete(bannedComments).where(eq(bannedComments.id, bannedCommentId));
+
+  return { adId: deletedComment.adId };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 type Props = {
@@ -36,8 +36,14 @@ export default function AdsFilterControls({
   const [model, setModel] = useState(initialModel);
   const [year, setYear] = useState(initialYear);
   const [isPending, startTransition] = useTransition();
+  const didMount = useRef(false);
 
   useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
+
     const timeout = window.setTimeout(() => {
       startTransition(() => {
         router.replace(buildQuery(name, model, year, 1));
@@ -48,41 +54,47 @@ export default function AdsFilterControls({
   }, [name, model, year, router]);
 
   return (
-    <div className="mt-8 grid gap-3 md:grid-cols-3">
-      <label className="block">
-        <span className="text-sm font-medium text-slate-700">Name</span>
-        <input
-          type="text"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Search by car name"
-          className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-        />
-      </label>
-      <label className="block">
-        <span className="text-sm font-medium text-slate-700">Model</span>
-        <input
-          type="text"
-          value={model}
-          onChange={(event) => setModel(event.target.value)}
-          placeholder="Search by model"
-          className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-        />
-      </label>
-      <label className="block">
-        <span className="text-sm font-medium text-slate-700">Year</span>
-        <input
-          type="text"
-          value={year}
-          onChange={(event) => setYear(event.target.value)}
-          placeholder="Search by year"
-          className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-        />
-      </label>
-      <p className="col-span-full text-sm text-slate-500">
-        Filters apply automatically when any field changes.
-        {isPending ? " Updating…" : ""}
-      </p>
+    <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <div className="grid gap-3 md:grid-cols-3">
+        <label className="block">
+          <span className="text-sm font-medium text-slate-700">Name</span>
+          <input
+            type="search"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Toyota"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-slate-700">Model</span>
+          <input
+            type="search"
+            value={model}
+            onChange={(event) => setModel(event.target.value)}
+            placeholder="Corolla"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-slate-700">Year</span>
+          <input
+            type="search"
+            inputMode="numeric"
+            value={year}
+            onChange={(event) => setYear(event.target.value)}
+            placeholder="2020"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+          />
+        </label>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <p>Results update automatically as you type.</p>
+        {isPending ? (
+          <p className="font-medium text-sky-700">Updating...</p>
+        ) : null}
+      </div>
     </div>
   );
 }

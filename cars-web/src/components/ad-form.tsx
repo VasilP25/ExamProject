@@ -75,6 +75,18 @@ export default function AdForm({ action }: AdFormProps) {
       </label>
 
       <label className="block text-sm font-medium text-slate-700">
+        Description
+        <textarea
+          name="description"
+          rows={5}
+          maxLength={1200}
+          placeholder="Describe the car condition, equipment, service history, and anything important for buyers."
+          required
+          className="mt-2 w-full resize-y rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none ring-slate-400 transition focus:border-slate-900 focus:ring-2"
+        />
+      </label>
+
+      <label className="block text-sm font-medium text-slate-700">
         Picture URL
         <input
           name="picture"
