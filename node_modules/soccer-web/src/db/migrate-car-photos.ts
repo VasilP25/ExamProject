@@ -1,6 +1,10 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "./index";
-import { getSeedAdDescription, seedAdsData } from "./seed-ads-data";
+import {
+  getSeedAdDescription,
+  getSeedAdPrice,
+  seedAdsData,
+} from "./seed-ads-data";
 import { ads, users } from "./schema";
 
 async function findOwnerId(ownerEmail: string): Promise<number> {
@@ -24,6 +28,7 @@ async function migrateSeedAds() {
 
   for (const car of seedAdsData) {
     const description = car.description ?? getSeedAdDescription(car);
+    const price = car.price ?? getSeedAdPrice(car);
     const [existingAd] = await db
       .select({ id: ads.id })
       .from(ads)
@@ -38,7 +43,7 @@ async function migrateSeedAds() {
     if (existingAd) {
       await db
         .update(ads)
-        .set({ description, picture: car.picture, likes: car.likes })
+        .set({ description, price, picture: car.picture, likes: car.likes })
         .where(eq(ads.id, existingAd.id));
       updatedCount += 1;
       continue;
@@ -49,6 +54,7 @@ async function migrateSeedAds() {
       name: car.name,
       model: car.model,
       year: car.year,
+      price,
       description,
       picture: car.picture,
       ownId: ownerId,

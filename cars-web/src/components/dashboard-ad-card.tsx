@@ -1,16 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
-import { deleteAdAction } from "../lib/ad-actions";
+import { deleteAdAction, toggleAdLikeAction } from "../lib/ad-actions";
 import type { DashboardAd } from "../services/ads";
 
 type DashboardAdCardProps = {
   ad: DashboardAd;
   canDelete: boolean;
+  canLike?: boolean;
 };
 
 export default function DashboardAdCard({
   ad,
   canDelete,
+  canLike = true,
 }: DashboardAdCardProps) {
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -37,9 +39,39 @@ export default function DashboardAdCard({
         <p className="text-sm font-medium text-slate-600">
           Year of registration: {ad.year}
         </p>
+        <p className="text-sm font-semibold text-slate-900">
+          Price: {ad.price.toLocaleString("en-US")} EUR
+        </p>
         <p className="text-sm font-medium text-slate-600">
           Posted by: {ad.ownerName}
         </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <p className="text-sm font-semibold text-slate-700">
+            {ad.likes} {ad.likes === 1 ? "like" : "likes"}
+          </p>
+          {canLike ? (
+            <form action={toggleAdLikeAction}>
+              <input type="hidden" name="adId" value={ad.id} />
+              <button
+                type="submit"
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  ad.isLikedByCurrentUser
+                    ? "bg-sky-700 text-white hover:bg-sky-800"
+                    : "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                {ad.isLikedByCurrentUser ? "Liked" : "Like"}
+              </button>
+            </form>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              Like
+            </Link>
+          )}
+        </div>
         <p className="text-sm font-medium text-slate-600">
           <Link
             href={`/ads/${ad.id}/comments`}

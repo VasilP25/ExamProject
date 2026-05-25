@@ -2,6 +2,7 @@ export type SeedAdData = {
   name: string;
   model: string;
   year: number;
+  price?: number;
   description?: string;
   picture: string;
   ownerEmail: string;
@@ -14,6 +15,13 @@ export function getSeedAdDescription(ad: {
   year: number;
 }): string {
   return `${ad.year} ${ad.name} ${ad.model} in good condition, suitable for everyday driving. The car has a clean look, practical equipment, and is ready for viewings.`;
+}
+
+export function getSeedAdPrice(ad: { year: number; likes: number }): number {
+  const age = Math.max(new Date().getFullYear() - ad.year, 0);
+  const basePrice = Math.max(42000 - age * 1800, 3500);
+
+  return basePrice + ad.likes * 250;
 }
 
 export const seedAdsData: SeedAdData[] = [

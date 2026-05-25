@@ -5,10 +5,8 @@ import { getLatestAds } from "../../services/ads";
 export default async function DashboardPage() {
   await requireAuth();
 
-  const [user, latestAds] = await Promise.all([
-    getCurrentUser(),
-    getLatestAds(3),
-  ]);
+  const user = await getCurrentUser();
+  const latestAds = await getLatestAds(3, user?.id);
 
   return (
     <section className="space-y-8">
@@ -38,6 +36,7 @@ export default async function DashboardPage() {
                 key={ad.id}
                 ad={ad}
                 canDelete={user?.userType === "admin" || user?.id === ad.ownerId}
+                canLike={Boolean(user)}
               />
             ))}
           </div>

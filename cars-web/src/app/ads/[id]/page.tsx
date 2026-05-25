@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { toggleAdLikeAction } from "../../../lib/ad-actions";
+import { getCurrentUser } from "../../../lib/auth";
 import { getAdDetail, getCommentsForAd } from "../../../services/ads";
 
 export default async function AdDetailPage({ params }: { params: { id: string } }) {
@@ -8,8 +10,9 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
     notFound();
   }
 
+  const user = await getCurrentUser();
   const [ad, comments] = await Promise.all([
-    getAdDetail(adId),
+    getAdDetail(adId, user?.id),
     getCommentsForAd(adId),
   ]);
 
@@ -63,8 +66,39 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                   <span className="font-semibold">Year:</span> {ad.year}
                 </p>
                 <p>
+                  <span className="font-semibold">Price:</span>{" "}
+                  {ad.price.toLocaleString("en-US")} EUR
+                </p>
+                <p>
                   <span className="font-semibold">Comments:</span> {ad.commentCount}
                 </p>
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <p className="font-semibold">
+                    {ad.likes} {ad.likes === 1 ? "like" : "likes"}
+                  </p>
+                  {user ? (
+                    <form action={toggleAdLikeAction}>
+                      <input type="hidden" name="adId" value={ad.id} />
+                      <button
+                        type="submit"
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                          ad.isLikedByCurrentUser
+                            ? "bg-sky-700 text-white hover:bg-sky-800"
+                            : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        {ad.isLikedByCurrentUser ? "Liked" : "Like"}
+                      </button>
+                    </form>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                    >
+                      Like
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -52,10 +52,8 @@ export default async function AdsPage({
   const year = rawYear?.trim() ?? "";
   const page = Number(rawPage ?? "1") || 1;
 
-  const [user, pagination] = await Promise.all([
-    getCurrentUser(),
-    getAds(name, model, year, page),
-  ]);
+  const user = await getCurrentUser();
+  const pagination = await getAds(name, model, year, page, undefined, user?.id);
 
   return (
     <section className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6">
@@ -104,6 +102,7 @@ export default async function AdsPage({
               key={ad.id}
               ad={ad}
               canDelete={user?.userType === "admin" || user?.id === ad.ownerId}
+              canLike={Boolean(user)}
             />
           ))}
         </div>

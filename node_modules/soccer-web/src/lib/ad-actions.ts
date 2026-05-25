@@ -9,6 +9,7 @@ import {
   deleteAdForUser,
   deleteCommentForUser,
   restoreDeletedComment,
+  toggleAdLike,
 } from "../services/ads";
 
 export type AdActionState = {
@@ -50,11 +51,15 @@ export async function createAdAction(
     const name = getRequiredField(formData, "name");
     const model = getRequiredField(formData, "model");
     const year = Number(getRequiredField(formData, "year"));
+    const price = Number(getRequiredField(formData, "price"));
     const description = getRequiredField(formData, "description");
     const picture = getOptionalUrl(formData, "picture");
 
     if (!Number.isInteger(year) || year < 1900 || year > 2100) {
       throw new Error("Year must be between 1900 and 2100.");
+    }
+    if (!Number.isInteger(price) || price < 0 || price > 10000000) {
+      throw new Error("Price must be a positive whole number.");
     }
     if (description.length > 1200) {
       throw new Error("Description must be 1200 characters or less.");
@@ -64,6 +69,7 @@ export async function createAdAction(
       name,
       model,
       year,
+      price,
       description,
       picture,
       ownerId: user.id,
@@ -98,6 +104,26 @@ export async function deleteAdAction(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/dashboard");
+}
+
+export async function toggleAdLikeAction(formData: FormData): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error("You must be logged in to like an ad.");
+  }
+
+  const adId = Number(formData.get("adId"));
+  if (!Number.isInteger(adId)) {
+    throw new Error("Invalid ad.");
+  }
+
+  await toggleAdLike({ adId, userId: user.id });
+
+  revalidatePath("/ads");
+  revalidatePath("/dashboard");
+  revalidatePath("/liked-cars");
+  revalidatePath(`/ads/${adId}`);
+  revalidatePath(`/ads/${adId}/comments`);
 }
 
 export async function deleteCommentAction(formData: FormData): Promise<void> {

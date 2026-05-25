@@ -1,7 +1,11 @@
 import bcrypt from "bcrypt";
 import { db } from "./index";
 import { users, ads, comments, bannedComments } from "./schema";
-import { getSeedAdDescription, seedAdsData } from "./seed-ads-data";
+import {
+  getSeedAdDescription,
+  getSeedAdPrice,
+  seedAdsData,
+} from "./seed-ads-data";
 import { seedCommentsData } from "./seed-comments-data";
 
 const usersData = [
@@ -69,6 +73,7 @@ async function seed() {
 
   const adsData = seedAdsData.map(({ ownerEmail, ...ad }) => ({
     ...ad,
+    price: ad.price ?? getSeedAdPrice(ad),
     description: ad.description ?? getSeedAdDescription(ad),
     ownId: emailToId[ownerEmail],
   }));

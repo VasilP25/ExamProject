@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import {
   createCommentAction,
   deleteCommentAction,
+  toggleAdLikeAction,
 } from "../../../../lib/ad-actions";
 import { getCurrentUser } from "../../../../lib/auth";
 import { getAdDetail, getCommentsForAd } from "../../../../services/ads";
@@ -21,9 +22,9 @@ export default async function AdCommentsPage({
     notFound();
   }
 
-  const [user, ad, comments] = await Promise.all([
-    getCurrentUser(),
-    getAdDetail(adId),
+  const user = await getCurrentUser();
+  const [ad, comments] = await Promise.all([
+    getAdDetail(adId, user?.id),
     getCommentsForAd(adId),
   ]);
 
@@ -95,9 +96,40 @@ export default async function AdCommentsPage({
                 {ad.year}
               </p>
               <p>
+                <span className="font-semibold text-slate-950">Price:</span>{" "}
+                {ad.price.toLocaleString("en-US")} EUR
+              </p>
+              <p>
                 <span className="font-semibold text-slate-950">Posted by:</span>{" "}
                 {ad.ownerName}
               </p>
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                <p className="font-semibold text-slate-950">
+                  {ad.likes} {ad.likes === 1 ? "like" : "likes"}
+                </p>
+                {user ? (
+                  <form action={toggleAdLikeAction}>
+                    <input type="hidden" name="adId" value={ad.id} />
+                    <button
+                      type="submit"
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        ad.isLikedByCurrentUser
+                          ? "bg-sky-700 text-white hover:bg-sky-800"
+                          : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      {ad.isLikedByCurrentUser ? "Liked" : "Like"}
+                    </button>
+                  </form>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    Like
+                  </Link>
+                )}
+              </div>
               <div>
                 <p className="font-semibold text-slate-950">Description:</p>
                 <p className="mt-2 leading-6">{ad.description}</p>

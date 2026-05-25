@@ -5,6 +5,7 @@ import {
   text,
   integer,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -24,6 +25,7 @@ export const ads = pgTable("ads", {
   name: varchar("name", { length: 255 }).notNull(),
   model: varchar("model", { length: 255 }).notNull(),
   year: integer("year").notNull(),
+  price: integer("price").notNull().default(0),
   description: text("description").notNull().default(""),
   picture: text("picture"), // URL or path to picture
   ownId: integer("own_id")
@@ -32,6 +34,27 @@ export const ads = pgTable("ads", {
   likes: integer("likes").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Ad likes table
+export const adLikes = pgTable(
+  "ad_likes",
+  {
+    id: serial("id").primaryKey(),
+    adId: integer("ad_id")
+      .notNull()
+      .references(() => ads.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    uniqueUserAdLike: uniqueIndex("ad_likes_user_ad_unique").on(
+      table.userId,
+      table.adId,
+    ),
+  }),
+);
 
 // Comments table
 export const comments = pgTable("comments", {
@@ -66,13 +89,20 @@ export const bannedComments = pgTable("banned_comments", {
 export const usersRelations = relations(users, ({ many }) => ({
   ads: many(ads),
   comments: many(comments),
+  adLikes: many(adLikes),
   bannedComments: many(bannedComments),
 }));
 
 export const adsRelations = relations(ads, ({ one, many }) => ({
   owner: one(users, { fields: [ads.ownId], references: [users.id] }),
   comments: many(comments),
+  adLikes: many(adLikes),
   bannedComments: many(bannedComments),
+}));
+
+export const adLikesRelations = relations(adLikes, ({ one }) => ({
+  ad: one(ads, { fields: [adLikes.adId], references: [ads.id] }),
+  user: one(users, { fields: [adLikes.userId], references: [users.id] }),
 }));
 
 export const commentsRelations = relations(comments, ({ one, many }) => ({

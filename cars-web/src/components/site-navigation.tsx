@@ -41,6 +41,12 @@ export default function SiteNavigation({ user, logoutAction }: Props) {
               Dashboard
             </Link>
             <Link
+              href="/liked-cars"
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            >
+              Liked cars
+            </Link>
+            <Link
               href="/ads/new"
               className="rounded-full bg-sky-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-800"
             >
@@ -127,6 +133,12 @@ export default function SiteNavigation({ user, logoutAction }: Props) {
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                 >
                   Dashboard
+                </Link>
+                <Link
+                  href="/liked-cars"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  Liked cars
                 </Link>
                 <Link
                   href="/ads/new"
