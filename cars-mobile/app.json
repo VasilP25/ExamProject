@@ -34,12 +34,12 @@
             "imageWidth": 76
           }
         }
-      ],
-      "expo-image"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": true,
+      "autolinkingModuleResolution": true
     }
   }
 }
