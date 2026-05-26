@@ -28,6 +28,10 @@ export type AdsPaginationResult = {
 };
 
 const ADS_PAGE_SIZE = 9;
+const visibleCommentCount =
+  sql<number>`COALESCE(COUNT(${comments.id}) FILTER (WHERE ${bannedComments.id} IS NULL), 0)`.mapWith(
+    Number,
+  );
 
 export async function getAds(
   name = "",
@@ -75,7 +79,7 @@ export async function getAds(
             AND ${adLikes.userId} = ${currentUserId}
           )`
         : sql<boolean>`false`,
-      commentCount: sql<number>`COALESCE(COUNT(${comments.id}) FILTER (WHERE ${bannedComments.id} IS NULL), 0)`,
+      commentCount: visibleCommentCount,
     })
     .from(ads)
     .leftJoin(comments, eq(comments.adId, ads.id))
@@ -140,7 +144,7 @@ export async function getLatestAds(
             AND ${adLikes.userId} = ${currentUserId}
           )`
         : sql<boolean>`false`,
-      commentCount: sql<number>`COALESCE(COUNT(${comments.id}) FILTER (WHERE ${bannedComments.id} IS NULL), 0)`,
+      commentCount: visibleCommentCount,
     })
     .from(ads)
     .leftJoin(comments, eq(comments.adId, ads.id))
@@ -161,6 +165,64 @@ export async function getLatestAds(
     )
     .orderBy(desc(ads.createdAt), desc(ads.id))
     .limit(limit);
+}
+
+async function getTopAdBy(orderExpression: SQL): Promise<DashboardAd | null> {
+  const [ad] = await db
+    .select({
+      id: ads.id,
+      name: ads.name,
+      model: ads.model,
+      year: ads.year,
+      price: ads.price,
+      description: ads.description,
+      picture: ads.picture,
+      ownerId: ads.ownId,
+      ownerName: users.name,
+      likes: sql<number>`COALESCE(${ads.likes}, 0)`,
+      isLikedByCurrentUser: sql<boolean>`false`,
+      commentCount: visibleCommentCount,
+    })
+    .from(ads)
+    .leftJoin(comments, eq(comments.adId, ads.id))
+    .leftJoin(bannedComments, eq(bannedComments.commentId, comments.id))
+    .innerJoin(users, eq(ads.ownId, users.id))
+    .groupBy(
+      ads.id,
+      ads.name,
+      ads.model,
+      ads.year,
+      ads.price,
+      ads.description,
+      ads.picture,
+      ads.ownId,
+      ads.likes,
+      users.name,
+    )
+    .orderBy(desc(orderExpression), desc(ads.id))
+    .limit(1);
+
+  return ad ?? null;
+}
+
+export type AdHighlights = {
+  mostLiked: DashboardAd | null;
+  mostCommented: DashboardAd | null;
+  mostExpensive: DashboardAd | null;
+};
+
+export async function getAdHighlights(): Promise<AdHighlights> {
+  const [mostLiked, mostCommented, mostExpensive] = await Promise.all([
+    getTopAdBy(sql<number>`COALESCE(${ads.likes}, 0)`),
+    getTopAdBy(visibleCommentCount),
+    getTopAdBy(sql<number>`${ads.price}`),
+  ]);
+
+  return {
+    mostLiked,
+    mostCommented,
+    mostExpensive,
+  };
 }
 
 export async function createAd({
@@ -186,20 +248,30 @@ export async function createAd({
 
 export async function toggleAdLike({
   adId,
-  userId,
+  user,
 }: {
   adId: number;
-  userId: number;
+  user: AuthUser;
 }): Promise<boolean> {
-  const [ad] = await db.select({ id: ads.id }).from(ads).where(eq(ads.id, adId));
+  if (user.userType === "admin") {
+    throw new Error("Admins cannot like ads.");
+  }
+
+  const [ad] = await db
+    .select({ id: ads.id, ownerId: ads.ownId })
+    .from(ads)
+    .where(eq(ads.id, adId));
   if (!ad) {
     throw new Error("Ad not found.");
+  }
+  if (ad.ownerId === user.id) {
+    throw new Error("You cannot like your own ad.");
   }
 
   const [existingLike] = await db
     .select({ id: adLikes.id })
     .from(adLikes)
-    .where(and(eq(adLikes.adId, adId), eq(adLikes.userId, userId)));
+    .where(and(eq(adLikes.adId, adId), eq(adLikes.userId, user.id)));
 
   if (existingLike) {
     await db.delete(adLikes).where(eq(adLikes.id, existingLike.id));
@@ -211,7 +283,7 @@ export async function toggleAdLike({
     return false;
   }
 
-  await db.insert(adLikes).values({ adId, userId });
+  await db.insert(adLikes).values({ adId, userId: user.id });
   await db
     .update(ads)
     .set({ likes: sql`COALESCE(${ads.likes}, 0) + 1` })
@@ -283,7 +355,7 @@ export async function getAdDetail(
             AND ${adLikes.userId} = ${currentUserId}
           )`
         : sql<boolean>`false`,
-      commentCount: sql<number>`COALESCE(COUNT(${comments.id}) FILTER (WHERE ${bannedComments.id} IS NULL), 0)`,
+      commentCount: visibleCommentCount,
     })
     .from(ads)
     .leftJoin(comments, eq(comments.adId, ads.id))
@@ -322,7 +394,7 @@ export async function getLikedAds(userId: number): Promise<DashboardAd[]> {
       ownerName: users.name,
       likes: sql<number>`COALESCE(${ads.likes}, 0)`,
       isLikedByCurrentUser: sql<boolean>`true`,
-      commentCount: sql<number>`COALESCE(COUNT(${comments.id}) FILTER (WHERE ${bannedComments.id} IS NULL), 0)`,
+      commentCount: visibleCommentCount,
     })
     .from(adLikes)
     .innerJoin(ads, eq(adLikes.adId, ads.id))
@@ -344,6 +416,47 @@ export async function getLikedAds(userId: number): Promise<DashboardAd[]> {
       adLikes.createdAt,
     )
     .orderBy(desc(adLikes.createdAt), desc(ads.id));
+}
+
+export async function getAdsByOwner(ownerId: number): Promise<DashboardAd[]> {
+  return db
+    .select({
+      id: ads.id,
+      name: ads.name,
+      model: ads.model,
+      year: ads.year,
+      price: ads.price,
+      description: ads.description,
+      picture: ads.picture,
+      ownerId: ads.ownId,
+      ownerName: users.name,
+      likes: sql<number>`COALESCE(${ads.likes}, 0)`,
+      isLikedByCurrentUser: sql<boolean>`EXISTS (
+        SELECT 1 FROM ${adLikes}
+        WHERE ${adLikes.adId} = ${ads.id}
+        AND ${adLikes.userId} = ${ownerId}
+      )`,
+      commentCount: visibleCommentCount,
+    })
+    .from(ads)
+    .innerJoin(users, eq(ads.ownId, users.id))
+    .leftJoin(comments, eq(comments.adId, ads.id))
+    .leftJoin(bannedComments, eq(bannedComments.commentId, comments.id))
+    .where(eq(ads.ownId, ownerId))
+    .groupBy(
+      ads.id,
+      ads.name,
+      ads.model,
+      ads.year,
+      ads.price,
+      ads.description,
+      ads.picture,
+      ads.ownId,
+      ads.likes,
+      users.name,
+      ads.createdAt,
+    )
+    .orderBy(desc(ads.createdAt), desc(ads.id));
 }
 
 export async function getCommentsForAd(adId: number): Promise<AdComment[]> {

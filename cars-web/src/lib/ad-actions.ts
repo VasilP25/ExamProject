@@ -47,6 +47,9 @@ export async function createAdAction(
     if (!user) {
       throw new Error("You must be logged in to create an ad.");
     }
+    if (user.userType === "admin") {
+      throw new Error("Admins cannot create ads.");
+    }
 
     const name = getRequiredField(formData, "name");
     const model = getRequiredField(formData, "model");
@@ -117,7 +120,7 @@ export async function toggleAdLikeAction(formData: FormData): Promise<void> {
     throw new Error("Invalid ad.");
   }
 
-  await toggleAdLike({ adId, userId: user.id });
+  await toggleAdLike({ adId, user });
 
   revalidatePath("/ads");
   revalidatePath("/dashboard");

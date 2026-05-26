@@ -1,9 +1,15 @@
 import AdForm from "../../../components/ad-form";
-import { requireAuth } from "../../../lib/auth";
+import { getCurrentUser, requireAuth } from "../../../lib/auth";
 import { createAdAction } from "../../../lib/ad-actions";
+import { redirect } from "next/navigation";
 
 export default async function NewAdPage() {
   await requireAuth();
+  const user = await getCurrentUser();
+
+  if (user?.userType === "admin") {
+    redirect("/dashboard");
+  }
 
   return (
     <section className="mx-auto max-w-2xl space-y-6">

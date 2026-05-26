@@ -31,6 +31,8 @@ export default async function AdCommentsPage({
   if (!ad) {
     notFound();
   }
+  const canLike =
+    Boolean(user) && user?.userType !== "admin" && user?.id !== ad.ownerId;
 
   return (
     <section className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6">
@@ -113,7 +115,7 @@ export default async function AdCommentsPage({
                 <p className="font-semibold text-slate-950">
                   {ad.likes} {ad.likes === 1 ? "like" : "likes"}
                 </p>
-                {user ? (
+                {canLike ? (
                   <form action={toggleAdLikeAction}>
                     <input type="hidden" name="adId" value={ad.id} />
                     <button
@@ -127,14 +129,14 @@ export default async function AdCommentsPage({
                       {ad.isLikedByCurrentUser ? "Liked" : "Like"}
                     </button>
                   </form>
-                ) : (
+                ) : !user ? (
                   <Link
                     href="/login"
                     className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                   >
                     Like
                   </Link>
-                )}
+                ) : null}
               </div>
               <div>
                 <p className="font-semibold text-slate-950">Description:</p>

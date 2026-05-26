@@ -44,7 +44,7 @@ export default async function LikedCarsPage() {
               key={ad.id}
               ad={ad}
               canDelete={user.userType === "admin" || user.id === ad.ownerId}
-              canLike
+              canLike={user.userType !== "admin" && user.id !== ad.ownerId}
             />
           ))}
         </div>

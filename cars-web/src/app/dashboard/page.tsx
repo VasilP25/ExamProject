@@ -36,7 +36,11 @@ export default async function DashboardPage() {
                 key={ad.id}
                 ad={ad}
                 canDelete={user?.userType === "admin" || user?.id === ad.ownerId}
-                canLike={Boolean(user)}
+                canLike={
+                  Boolean(user) &&
+                  user?.userType !== "admin" &&
+                  user?.id !== ad.ownerId
+                }
               />
             ))}
           </div>

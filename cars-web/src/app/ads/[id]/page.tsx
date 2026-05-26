@@ -19,6 +19,8 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
   if (!ad) {
     notFound();
   }
+  const canLike =
+    Boolean(user) && user?.userType !== "admin" && user?.id !== ad.ownerId;
 
   return (
     <section className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6">
@@ -91,7 +93,7 @@ export default async function AdDetailPage({ params }: { params: { id: string } 
                   <p className="font-semibold">
                     {ad.likes} {ad.likes === 1 ? "like" : "likes"}
                   </p>
-                  {user ? (
+                  {canLike ? (
                     <form action={toggleAdLikeAction}>
                       <input type="hidden" name="adId" value={ad.id} />
                       <button
