@@ -1,6 +1,21 @@
 import type { AdsResponse, DashboardResponse } from '@/types/ad';
+import Constants from 'expo-constants';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+function getApiBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  }
+
+  const expoHost = Constants.expoConfig?.hostUri?.split(':')[0];
+
+  if (expoHost) {
+    return `http://${expoHost}:3000`;
+  }
+
+  return 'http://localhost:3000';
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`);

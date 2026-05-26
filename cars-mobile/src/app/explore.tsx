@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CarCard } from '@/components/car-card';
+import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
@@ -77,12 +78,11 @@ export default function BrowseAdsScreen() {
   return (
     <ThemedView style={styles.screen}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <ThemedText type="subtitle">Browse ads</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Search cars by brand, model, or year.
-          </ThemedText>
-        </View>
+        <ScreenHeader
+          iconName="search-outline"
+          title="Browse ads"
+          description="Search cars by brand, model, or year."
+        />
 
         <ThemedView type="backgroundElement" style={styles.filters}>
           <TextInput
@@ -162,10 +162,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.four,
-  },
-  header: {
-    gap: 8,
-    marginBottom: Spacing.four,
   },
   filters: {
     gap: Spacing.two,
