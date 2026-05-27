@@ -1,7 +1,7 @@
 import type { AdsResponse, DashboardResponse } from '@/types/ad';
 import Constants from 'expo-constants';
 
-function getApiBaseUrl(): string {
+function getApiBaseUrl(): string | null {
   const configuredUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   if (configuredUrl) {
@@ -9,7 +9,7 @@ function getApiBaseUrl(): string {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    throw new Error('Missing EXPO_PUBLIC_API_BASE_URL for the production API.');
+    return null;
   }
 
   const expoHost = Constants.expoConfig?.hostUri?.split(':')[0];
@@ -24,6 +24,12 @@ function getApiBaseUrl(): string {
 const API_BASE_URL = getApiBaseUrl();
 
 async function fetchJson<T>(path: string): Promise<T> {
+  if (!API_BASE_URL) {
+    throw new Error(
+      'Missing API URL. Set EXPO_PUBLIC_API_BASE_URL on the mobile Netlify site to your cars-web URL.',
+    );
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`);
 
   if (!response.ok) {
