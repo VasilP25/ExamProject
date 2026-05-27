@@ -50,6 +50,12 @@ For Expo on a physical phone, the mobile app auto-detects the computer LAN IP fr
 EXPO_PUBLIC_API_BASE_URL="http://YOUR_COMPUTER_IP:3000"
 ```
 
+For the deployed Expo web app, set `EXPO_PUBLIC_API_BASE_URL` in the mobile Netlify site's environment variables to the deployed `cars-web` origin, for example:
+
+```env
+EXPO_PUBLIC_API_BASE_URL="https://YOUR_CARS_WEB_SITE.netlify.app"
+```
+
 ## Install
 
 Run dependencies from the repository root:

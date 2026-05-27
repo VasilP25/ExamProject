@@ -2,8 +2,14 @@ import type { AdsResponse, DashboardResponse } from '@/types/ad';
 import Constants from 'expo-constants';
 
 function getApiBaseUrl(): string {
-  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
-    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  const configuredUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+  if (configuredUrl) {
+    return configuredUrl.replace(/\/$/, '');
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Missing EXPO_PUBLIC_API_BASE_URL for the production API.');
   }
 
   const expoHost = Constants.expoConfig?.hostUri?.split(':')[0];

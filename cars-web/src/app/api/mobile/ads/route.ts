@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAds } from "../../../../services/ads";
+import { corsOptionsResponse, withCors } from "../../../../lib/cors";
+
+export function OPTIONS() {
+  return corsOptionsResponse();
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -10,16 +15,18 @@ export async function GET(request: Request) {
 
   const result = await getAds(name, model, year, page);
 
-  return NextResponse.json({
-    ...result,
-    ads: result.ads.map((ad) => ({
-      id: ad.id,
-      name: ad.name,
-      model: ad.model,
-      year: ad.year,
-      picture: ad.picture,
-      ownerName: ad.ownerName,
-      likes: ad.likes,
-    })),
-  });
+  return withCors(
+    NextResponse.json({
+      ...result,
+      ads: result.ads.map((ad) => ({
+        id: ad.id,
+        name: ad.name,
+        model: ad.model,
+        year: ad.year,
+        picture: ad.picture,
+        ownerName: ad.ownerName,
+        likes: ad.likes,
+      })),
+    }),
+  );
 }
