@@ -9,7 +9,8 @@ function getApiBaseUrl(): string | null {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    return null;
+    //return null;
+    return 'https://mobilefromtemu.netlify.app'
   }
 
   const expoHost = Constants.expoConfig?.hostUri?.split(':')[0];
