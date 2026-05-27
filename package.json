@@ -40,5 +40,8 @@
   },
   "optionalDependencies": {
     "@tailwindcss/oxide-linux-x64-gnu": "^4.3.0"
+  },
+  "devDependencies": {
+    "expo-router": "~6.0.23"
   }
 }
