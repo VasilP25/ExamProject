@@ -43,7 +43,6 @@ DATABASE_URL="your_neon_database_url"
 JWT_SECRET="your_long_random_secret"
 ```
 
-Do not commit `.env` files. They are ignored by `.gitignore`.
 
 For Expo on a physical phone, the mobile app auto-detects the computer LAN IP from Expo. You can override the API URL:
 
